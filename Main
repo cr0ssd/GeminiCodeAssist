@@ -1,0 +1,34 @@
+import os
+from gemini import GeminiClient  # Assuming you've installed a Gemini SDK
+from vscode import (
+    commands,
+    languages,
+    CompletionItem,
+    CompletionItemKind,
+    Position,
+    CompletionList
+)
+
+# Replace with your actual Gemini API Key
+API_KEY = "YOUR_GEMINI_API_KEY" 
+client = GeminiClient(API_KEY)
+
+class GeminiCompletionProvider(CompletionItemProvider):
+    def provide_completion_items(self, document, position):
+        line_prefix = document.line_at(position).text[:position.character]
+        prompt = f"Complete this Python code:\n{line_prefix}"  
+
+        response = client.generate_text(prompt, variation="code") 
+        suggestions = response.text.split('\n') 
+
+        items = []
+        for suggestion in suggestions:
+            item = CompletionItem(suggestion, kind=CompletionItemKind.Snippet)
+            items.append(item)
+
+        return CompletionList(items)
+
+
+# Register the completion provider with VS Code 
+commands.register_command('editor.action.triggerSuggest', GeminiCompletionProvider.provide_completion_items)
+
